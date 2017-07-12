@@ -78,7 +78,13 @@ module CartoDB
         move_to_schema(result, name, ORIGIN_SCHEMA, @destination_schema)
 
         runner.log.append("Before persisting metadata '#{name}' data_import_id: #{data_import_id}")
-        persist_metadata(result, name, data_import_id)
+        @table = Carto::Register.new(
+          user_id: data_import.user_id,
+          table_name: name,
+          metadata_visualization: data_import.metadata_visualization
+        ).register
+
+        @imported_table_visualization_ids << @table.table_visualization.id
 
         runner.log.append("Table '#{name}' registered")
       rescue => exception
@@ -226,14 +232,6 @@ module CartoDB
         })
       rescue => exception
         runner.log.append("Silently failed rename_the_geom_index_if_exists from #{current_name} to #{new_name} with exception #{exception}. Backtrace: #{exception.backtrace.to_s}. ")
-      end
-
-      def persist_metadata(result, name, data_import_id)
-        table_registrar.register(name, data_import_id)
-        @table = table_registrar.table
-        @imported_table_visualization_ids << @table.table_visualization.id
-        table.update_bounding_box
-        self
       end
 
       def results
