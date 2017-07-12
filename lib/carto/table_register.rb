@@ -1,6 +1,6 @@
 module Carto
   class TableRegister
-    def initialize(user_id, table_name, metadata_visualization: nil)
+    def initialize(user_id:, table_name:, metadata_visualization: nil)
       @user_id = user_id
       @table_name = table_name
       @metadata_visualization = metadata_visualization
