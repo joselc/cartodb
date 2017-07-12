@@ -16,18 +16,16 @@ module CartoDB
       attr_accessor :table
 
       # @param runner CartoDB::Importer2::Runner
-      # @param table_registrar CartoDB::TableRegistrar
       # @param quota_checker CartoDB::QuotaChecker
       # @param database
       # @param data_import_id String UUID
       # @param destination_schema String|nil
       # @param public_user_roles Array|nil
-      def initialize(runner, table_registrar, quota_checker, database, data_import_id,
+      def initialize(runner, quota_checker, database, data_import_id,
                      overviews_creator,
                      destination_schema = DESTINATION_SCHEMA, public_user_roles=[CartoDB::PUBLIC_DB_USER])
         @aborted                = false
         @runner                 = runner
-        @table_registrar        = table_registrar
         @quota_checker          = quota_checker
         @database               = database
         @data_import_id         = data_import_id
@@ -192,7 +190,7 @@ module CartoDB
       end
 
       def rename(result, current_name, new_name)
-        taken_names = Carto::Db::UserSchema.new(table_registrar.user).table_names
+        taken_names = Carto::Db::UserSchema.new(data_import.user).table_names
         new_name = Carto::ValidTableNameProposer.new.propose_valid_table_name(new_name, taken_names: taken_names)
 
         database.execute(%{
@@ -257,7 +255,7 @@ module CartoDB
         !Carto::UserTable.where(name: table_name, user_id: user_id).first.nil?
       end
 
-      attr_reader :runner, :table_registrar, :quota_checker, :database, :data_import_id
+      attr_reader :runner, :quota_checker, :database, :data_import_id
 
     end
   end
