@@ -15,6 +15,7 @@ module Carto
 
       table.save
       table.optimize
+      table.update_bounding_box
       table.map.recalculate_bounds!
     end
 
