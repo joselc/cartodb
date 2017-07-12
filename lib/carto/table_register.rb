@@ -1,12 +1,13 @@
 module Carto
   class TableRegister
-    def initialize(data_import, user)
+    def initialize(data_import, user, table_name)
       @data_import = data_import
       @user = user
+      @table_name = table_name
     end
 
-    def register(table_name)
-      table = build_table(table_name)
+    def register
+      table = build_table
 
       metadata_visualization = @data_import.metadata_visualization
       if metadata_visualization
@@ -20,15 +21,15 @@ module Carto
 
     private
 
-    def build_table(table_name)
+    def build_table
       table = Table.new
       table.user_id = @user.user
 
       # TODO: remember to set the Table class name in a sounder way once Table
       # has been refactored.
-      table.instance_eval { self[:name] = table_name }
+      table.instance_eval { self[:name] = @table_name }
 
-      table.migrate_existing_table = table_name
+      table.migrate_existing_table = @table_name
       table.data_import_id = @data_import.id
       table
     end
