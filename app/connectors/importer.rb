@@ -78,7 +78,7 @@ module CartoDB
         move_to_schema(result, name, ORIGIN_SCHEMA, @destination_schema)
 
         runner.log.append("Before persisting metadata '#{name}' data_import_id: #{data_import_id}")
-        @table = Carto::Register.new(
+        @table = Carto::TableRegister.new(
           user_id: data_import.user_id,
           table_name: name,
           metadata_visualization: data_import.metadata_visualization
