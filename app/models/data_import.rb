@@ -418,9 +418,7 @@ class DataImport < Sequel::Model
 
   private
 
-  def carto_geopkg_metadata_visualization
-    nil
-  end
+  def carto_geopkg_metadata_visualization; end
 
   def external_source_visualization
     @external_source_visualization ||= external_data_imports
