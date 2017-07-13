@@ -2,6 +2,7 @@
 require 'uuidtools'
 
 require_relative '../models/visualization/support_tables'
+require_relative '../../lib/carto/table_register'
 require_dependency 'carto/db/user_schema'
 require_dependency 'visualization/derived_creator'
 
