@@ -2,7 +2,7 @@
 require 'uuidtools'
 
 require_relative '../models/visualization/support_tables'
-require_relative '../../lib/carto/table_registrant'
+require_relative '../../lib/carto/table_registrar'
 require_dependency 'carto/db/user_schema'
 require_dependency 'visualization/derived_creator'
 
@@ -77,7 +77,7 @@ module CartoDB
         move_to_schema(result, name, ORIGIN_SCHEMA, @destination_schema)
 
         runner.log.append("Before persisting metadata '#{name}' data_import_id: #{data_import_id}")
-        @table = Carto::TableRegistrant.new(
+        @table = Carto::TableRegistrar.new(
           user_id: data_import.user_id,
           table_name: name,
           metadata_visualization: data_import.metadata_visualization
