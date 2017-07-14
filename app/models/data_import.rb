@@ -412,7 +412,7 @@ class DataImport < Sequel::Model
     [STATE_COMPLETE, STATE_FAILURE, STATE_STUCK].include?(state)
   end
 
-  def metadata_visualization
+  def dataset_visualization
     external_source_visualization || carto_geopkg_metadata_visualization
   end
 
@@ -714,7 +714,7 @@ class DataImport < Sequel::Model
         destination_schema,
         public_user_roles,
         create_visualization,
-        metadata_visualization
+        dataset_visualization
       )
     end
 
@@ -755,7 +755,7 @@ class DataImport < Sequel::Model
       destination_schema,
       public_user_roles,
       create_visualization,
-      metadata_visualization
+      dataset_visualization
     )
 
     [importer, connector, nil, nil]
