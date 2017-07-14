@@ -2,7 +2,8 @@ module Carto
   module Db
     class UserSchema
       def initialize(user)
-        @user = user.is_a?(Carto::User) ? ::User[user.id] : user
+        raise 'Sequel required for user' unless user.is_a?(::User)
+        @user = user
       end
 
       def table_names
