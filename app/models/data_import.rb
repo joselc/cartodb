@@ -756,8 +756,14 @@ class DataImport < Sequel::Model
       log.append 'After importer run'
     end
 
-    store_results(importer, runner, datasource_provider, manual_fields)
-    importer.nil? ? false : importer.success?
+    store_results(
+      importer: importer,
+      runner: runner,
+      datasource_provider: datasource_provider,
+      manual_fields: manual_fields
+    )
+
+    importer.try(:success?) || false
   rescue => e
     # Note: If this exception is not treated, results will not be defined
     # and the import will finish with a null error_code
@@ -770,42 +776,46 @@ class DataImport < Sequel::Model
   # @param runner CartoDB::Importer2::Runner|nil
   # @param datasource_provider mixed|nil
   # @param manual_fields Hash
-  def store_results(importer=nil, runner=nil, datasource_provider=nil, manual_fields={})
-    if importer.nil?
-      set_error(manual_fields.fetch(:error_code, 99999), manual_fields.fetch(:log_info, nil))
+  def store_results(importer: nil, runner: nil, datasource_provider: nil, manual_fields: {})
+    if importer
+      store_importer_results(importer)
     else
-      self.results    = importer.results
-      self.error_code = importer.error_code
-      self.rejected_layers = importer.rejected_layers.join(',') if !importer.rejected_layers.empty?
-      self.runner_warnings = runner.warnings.to_json if !runner.warnings.empty?
-
-      # http_response_code is only relevant if a direct download is performed
-      if runner && datasource_provider && datasource_provider.providers_download_url?
-        self.http_response_code = runner.downloader.http_response_code
-      end
-
-      # Table.after_create() setted fields that won't be saved to "final" data import unless specified here
-      self.table_name = importer.table.name if importer.success? && importer.table
-      self.table_id   = importer.table.id if importer.success? && importer.table
-
-      if importer.success?
-        update_visualization_id(importer)
-        update_synchronization(importer)
-      end
-
-      importer.success? ? set_datasource_audit_to_complete(datasource_provider,
-                                                         importer.success? && importer.table ? importer.table.id : nil)
-      : set_datasource_audit_to_failed(datasource_provider)
+      set_error(manual_fields[:error_code] || 99999, manual_fields[:log_info])
     end
 
-    unless runner.nil?
-      self.stats = ::JSON.dump(runner.stats)
+    store_runner_results(runner, datasource_provider) if runner
+  end
+
+  def store_importer_results(importer)
+    self.results    = importer.results
+    self.error_code = importer.error_code
+
+    unless importer.rejected_layers.empty?
+      self.rejected_layers = importer.rejected_layers.join(',')
+    end
+
+    if importer.success?
+      table = importer.try(:table)
+
+      self.table_name = table.try(:name)
+      self.table_id = table.try(:id)
+      self.visualization_id = importer.visualization.id
+
+      update_synchronization(importer)
+      set_datasource_audit_to_complete(datasource_provider, talbe_id)
+    else
+      set_datasource_audit_to_failed(datasource_provider)
     end
   end
 
-  def update_visualization_id(importer)
-    if importer.data_import.create_visualization
-      self.visualization_id = importer.data_import.visualization_id
+  def store_runner_results(runner, datasource_provider)
+    self.stats = ::JSON.dump(runner.stats)
+
+    runner_warnings = runner.warnings
+    self.runner_warnings = runner_warnings.to_json unless runner_warnings.empty?
+
+    if datasource_provider.try(:providers_download_url?)
+      self.http_response_code = runner.downloader.http_response_code
     end
   end
 
