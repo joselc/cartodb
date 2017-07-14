@@ -85,7 +85,7 @@ module CartoDB
         @table = Carto::TableRegistrar.new(
           user_id: @user.id,
           table_name: name,
-          dataset_visualization: dataset_visualization
+          dataset_visualization: @dataset_visualization
         ).register
 
         @imported_table_visualization_ids << @table.table_visualization.id
