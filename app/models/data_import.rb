@@ -795,7 +795,7 @@ class DataImport < Sequel::Model
   # @param manual_fields Hash
   def store_results(importer: nil, runner: nil, datasource_provider: nil, manual_fields: {})
     if importer
-      store_importer_results(importer)
+      store_importer_results(importer, datasource_provider)
     else
       set_error(manual_fields[:error_code] || 99999, manual_fields[:log_info])
     end
@@ -803,7 +803,7 @@ class DataImport < Sequel::Model
     store_runner_results(runner, datasource_provider) if runner
   end
 
-  def store_importer_results(importer)
+  def store_importer_results(importer, datasource_provider)
     self.results    = importer.results
     self.error_code = importer.error_code
 
@@ -816,7 +816,7 @@ class DataImport < Sequel::Model
 
       self.table_name = table.try(:name)
       self.table_id = table.try(:id)
-      self.visualization_id = importer.visualization.id
+      self.visualization_id = importer.try(:visualization).try(:id)
 
       update_synchronization(importer)
       set_datasource_audit_to_complete(datasource_provider, talbe_id)
