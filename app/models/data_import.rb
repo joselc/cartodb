@@ -706,7 +706,7 @@ class DataImport < Sequel::Model
       overviews_creator = CartoDB::Importer2::Overviews.new(runner, user)
 
       importer = CartoDB::Connector::Importer.new(
-        user: user,
+        user: Carto::User.find(user.id),
         runner: runner,
         quota_checker: quota_checker,
         database: database,
@@ -747,7 +747,7 @@ class DataImport < Sequel::Model
     overviews_creator = CartoDB::Importer2::Overviews.new(connector, user)
 
     importer = CartoDB::Connector::Importer.new(
-      user: user,
+      user: Carto::User.find(user.id),
       runner: connector,
       quota_checker: quota_checker,
       database: database,
