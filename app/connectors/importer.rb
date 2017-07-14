@@ -28,7 +28,8 @@ module CartoDB
                      overviews_creator:, destination_schema: DESTINATION_SCHEMA,
                      public_user_roles: [CartoDB::PUBLIC_DB_USER],
                      create_visualization: false, dataset_visualization:)
-        @user = user.is_a?(Carto::User) ? user : Carto::User.find(user.id)
+        raise 'ActiveRecord required for user' unless user.is_a?(Carto::User)
+        @user = user
         @aborted                = false
         @runner                 = runner
         @quota_checker          = quota_checker
