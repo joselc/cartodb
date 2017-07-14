@@ -24,9 +24,9 @@ module CartoDB
       # @param public_user_roles Array|nil
       # @param create_visualization Boolean
       # @param dataset_visualization Boolean
-      def initialize(user, runner, quota_checker, database, overviews_creator,
-                     destination_schema = DESTINATION_SCHEMA,
-                     public_user_roles = [CartoDB::PUBLIC_DB_USER],
+      def initialize(user:, runner:, quota_checker:, database:,
+                     overviews_creator:, destination_schema: DESTINATION_SCHEMA,
+                     public_user_roles: [CartoDB::PUBLIC_DB_USER],
                      create_visualization: false, dataset_visualization:)
         @user = user
         @aborted                = false
