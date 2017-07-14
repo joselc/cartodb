@@ -23,11 +23,11 @@ module CartoDB
       # @param destination_schema String|nil
       # @param public_user_roles Array|nil
       # @param create_visualization Boolean
-      # @param dataset_metadata Boolean
+      # @param dataset_visualization Boolean
       def initialize(user, runner, quota_checker, database, overviews_creator,
                      destination_schema = DESTINATION_SCHEMA,
                      public_user_roles = [CartoDB::PUBLIC_DB_USER],
-                     create_visualization: false, dataset_metadata:)
+                     create_visualization: false, dataset_visualization:)
         @user = user
         @aborted                = false
         @runner                 = runner
@@ -38,7 +38,7 @@ module CartoDB
         @support_tables_helper  = CartoDB::Visualization::SupportTables.new(database,
                                                                             {public_user_roles: public_user_roles})
         @create_visualization = create_visualization
-        @dataset_metadata = dataset_metadata
+        @dataset_visualization = dataset_visualization
 
         @imported_table_visualization_ids = []
         @rejected_layers = []
@@ -85,7 +85,7 @@ module CartoDB
         @table = Carto::TableRegistrar.new(
           user_id: @user.id,
           table_name: name,
-          dataset_metadata: dataset_metadata
+          dataset_visualization: dataset_visualization
         ).register
 
         @imported_table_visualization_ids << @table.table_visualization.id
