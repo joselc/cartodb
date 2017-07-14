@@ -1,16 +1,16 @@
 module Carto
   class TableRegistrar
-    def initialize(user_id:, table_name:, metadata_visualization: nil)
+    def initialize(user_id:, table_name:, dataset_visualization: nil)
       @user_id = user_id
       @table_name = table_name
-      @metadata_visualization = metadata_visualization
+      @dataset_visualization = dataset_visualization
     end
 
     def register
       table = build_table
 
-      if @metadata_visualization
-        copy_visualization_metedata_to_table(@metadata_visualization, table)
+      if @dataset_visualization
+        copy_visualization_metedata_to_table(@dataset_visualization, table)
       end
 
       table.save
@@ -35,9 +35,9 @@ module Carto
       table
     end
 
-    def copy_visualization_metedata_to_table(visualization, table)
-      table.description = visualization.description
-      table.set_tag_array(visualization.tags)
+    def copy_dataset_visualization_metedata_to_table(dataset_visualization, table)
+      table.description = dataset_visualization.description
+      table.set_tag_array(dataset_visualization.tags)
     end
   end
 end
