@@ -819,7 +819,7 @@ class DataImport < Sequel::Model
       self.visualization_id = importer.try(:visualization).try(:id)
 
       update_synchronization(importer)
-      set_datasource_audit_to_complete(datasource_provider, talbe_id)
+      set_datasource_audit_to_complete(datasource_provider, table_id)
     else
       set_datasource_audit_to_failed(datasource_provider)
     end
