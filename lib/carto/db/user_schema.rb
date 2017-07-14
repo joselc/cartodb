@@ -2,7 +2,7 @@ module Carto
   module Db
     class UserSchema
       def initialize(user)
-        @user = user
+        @user = user.is_a?(Carto::User) ? ::User[user.id] : user
       end
 
       def table_names
