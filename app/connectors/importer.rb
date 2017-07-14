@@ -62,7 +62,7 @@ module CartoDB
             create_overviews(result)
           }
 
-          create_visualization if data_import.create_visualization
+          create_visualization if @create_visualization
         end
 
         self
@@ -81,11 +81,11 @@ module CartoDB
         runner.log.append("Before moving schema '#{name}' from #{ORIGIN_SCHEMA} to #{@destination_schema}")
         move_to_schema(result, name, ORIGIN_SCHEMA, @destination_schema)
 
-        runner.log.append("Before persisting metadata '#{name}' data_import_id: #{data_import_id}")
+        runner.log.append("Before persisting metadata '#{name}'")
         @table = Carto::TableRegistrar.new(
-          user_id: data_import.user_id,
+          user_id: @user.id,
           table_name: name,
-          metadata_visualization: data_import.metadata_visualization
+          dataset_metadata: dataset_metadata
         ).register
 
         @imported_table_visualization_ids << @table.table_visualization.id
@@ -119,47 +119,9 @@ module CartoDB
         CartoDB::Logger.error(
           message:    "Overviews creation failed",
           exception:  exception,
-          user:       Carto::User.find(data_import.user_id),
+          user:       @user,
           table_name: result.name
         )
-      end
-
-      def create_visualization
-        if runner.visualizations.empty?
-          create_default_visualization
-        else
-          user = Carto::User.find(data_import.user_id)
-          renamed_tables = results.map { |r| [r.original_name, r.name] }.to_h
-          runner.visualizations.each do |visualization|
-            persister = Carto::VisualizationsExportPersistenceService.new
-            vis = persister.save_import(user, visualization, renamed_tables: renamed_tables)
-            bind_visualization_to_data_import(vis)
-          end
-        end
-      end
-
-      def create_default_visualization
-        tables = get_imported_tables
-        if tables.length > 0
-          user = ::User.where(id: data_import.user_id).first
-          vis, @rejected_layers = CartoDB::Visualization::DerivedCreator.new(user, tables).create
-          bind_visualization_to_data_import(vis)
-        end
-      end
-
-      def bind_visualization_to_data_import(vis)
-        data_import.visualization_id = vis.id
-        data_import.save
-        data_import.reload
-      end
-
-      def get_imported_tables
-        tables = []
-        @imported_table_visualization_ids.each do |table_id|
-          vis = CartoDB::Visualization::Member.new(id: table_id).fetch
-          tables << vis.table
-        end
-        tables
       end
 
       def success?
@@ -196,7 +158,7 @@ module CartoDB
       end
 
       def rename(result, current_name, new_name)
-        taken_names = Carto::Db::UserSchema.new(data_import.user).table_names
+        taken_names = Carto::Db::UserSchema.new(@user).table_names
         new_name = Carto::ValidTableNameProposer.new.propose_valid_table_name(new_name, taken_names: taken_names)
 
         database.execute(%{
@@ -224,8 +186,7 @@ module CartoDB
         CartoDB::Logger.debug(message: 'Error in table rename: dropping importer table',
                               exception: exception,
                               table_name: current_name,
-                              new_table_name: new_name,
-                              data_import: @data_import_id)
+                              new_table_name: new_name)
         raise exception
       end
 
@@ -251,17 +212,46 @@ module CartoDB
         results.map(&:error_code).compact.first
       end
 
-      def data_import
-        @data_import ||= DataImport[@data_import_id]
+      private
+
+      def create_visualization
+        if runner.visualizations.empty?
+          create_default_visualization
+        else
+          renamed_tables = results.map { |r| [r.original_name, r.name] }.to_h
+          runner.visualizations.each do |visualization|
+            persister = Carto::VisualizationsExportPersistenceService.new
+            @visualization = persister.save_import(
+              @user,
+              visualization,
+              renamed_tables: renamed_tables
+            )
+          end
+        end
       end
 
-      private
+      def create_default_visualization
+        tables = get_imported_tables
+        unless tables.empty?
+          derived_creator = CartoDB::Visualization::DerivedCreator.new(@user, tables)
+          @visualization, @rejected_layers = derived_creator.create
+        end
+      end
+
+      def get_imported_tables
+        tables = []
+        @imported_table_visualization_ids.each do |table_id|
+          vis = CartoDB::Visualization::Member.new(id: table_id).fetch
+          tables << vis.table
+        end
+        tables
+      end
 
       def exists_user_table_for_user_id(table_name, user_id)
         !Carto::UserTable.where(name: table_name, user_id: user_id).first.nil?
       end
 
-      attr_reader :runner, :quota_checker, :database, :data_import_id
+      attr_reader :runner, :quota_checker, :database
 
     end
   end
