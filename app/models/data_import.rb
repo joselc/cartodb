@@ -42,7 +42,7 @@ class DataImport < Sequel::Model
   attr_accessor   :log, :results
 
   one_to_many :external_data_imports
-  many_to_one :user, class: Carto::User
+  many_to_one :user
 
   # @see store_results() method also when adding new fields
   PUBLIC_ATTRIBUTES = [
