@@ -704,9 +704,18 @@ class DataImport < Sequel::Model
       destination_schema = current_user.database_schema
       public_user_roles = current_user.db_service.public_user_roles
       overviews_creator = CartoDB::Importer2::Overviews.new(runner, current_user)
-      importer      = CartoDB::Connector::Importer.new(runner, quota_checker, database, id,
-                                                       overviews_creator,
-                                                       destination_schema, public_user_roles)
+
+      importer = CartoDB::Connector::Importer.new(
+        current_user,
+        runner,
+        quota_checker,
+        database,
+        overviews_creator,
+        destination_schema,
+        public_user_roles,
+        create_visualization,
+        metadata_visualization
+      )
     end
 
     [importer, runner, datasource_provider, manual_fields]
@@ -736,11 +745,19 @@ class DataImport < Sequel::Model
     destination_schema = current_user.database_schema
     public_user_roles = current_user.db_service.public_user_roles
     overviews_creator = CartoDB::Importer2::Overviews.new(connector, current_user)
+
     importer = CartoDB::Connector::Importer.new(
-      connector, quota_checker, database, id,
+      current_user,
+      conenctor,
+      quota_checker,
+      database,
       overviews_creator,
-      destination_schema, public_user_roles
+      destination_schema,
+      public_user_roles,
+      create_visualization,
+      metadata_visualization
     )
+
     [importer, connector, nil, nil]
   end
 
