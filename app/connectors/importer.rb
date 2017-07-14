@@ -28,7 +28,7 @@ module CartoDB
                      overviews_creator:, destination_schema: DESTINATION_SCHEMA,
                      public_user_roles: [CartoDB::PUBLIC_DB_USER],
                      create_visualization: false, dataset_visualization:)
-        @user = user
+        @user = user.is_a?(Carto::User) ? user : Carto::User.find(user.id)
         @aborted                = false
         @runner                 = runner
         @quota_checker          = quota_checker
