@@ -14,26 +14,31 @@ module CartoDB
       MAX_RENAME_RETRIES  = 20
 
       attr_reader :imported_table_visualization_ids, :rejected_layers
-      attr_accessor :table
+      attr_accessor :table, :visualization
 
+      # @param user Carto::User
       # @param runner CartoDB::Importer2::Runner
       # @param quota_checker CartoDB::QuotaChecker
       # @param database
-      # @param data_import_id String UUID
       # @param destination_schema String|nil
       # @param public_user_roles Array|nil
-      def initialize(runner, quota_checker, database, data_import_id,
-                     overviews_creator,
-                     destination_schema = DESTINATION_SCHEMA, public_user_roles=[CartoDB::PUBLIC_DB_USER])
+      # @param create_visualization Boolean
+      # @param dataset_metadata Boolean
+      def initialize(user, runner, quota_checker, database, overviews_creator,
+                     destination_schema = DESTINATION_SCHEMA,
+                     public_user_roles = [CartoDB::PUBLIC_DB_USER],
+                     create_visualization: false, dataset_metadata:)
+        @user = user
         @aborted                = false
         @runner                 = runner
         @quota_checker          = quota_checker
         @database               = database
-        @data_import_id         = data_import_id
         @overviews_creator      = overviews_creator
         @destination_schema     = destination_schema
         @support_tables_helper  = CartoDB::Visualization::SupportTables.new(database,
                                                                             {public_user_roles: public_user_roles})
+        @create_visualization = create_visualization
+        @dataset_metadata = dataset_metadata
 
         @imported_table_visualization_ids = []
         @rejected_layers = []
