@@ -159,7 +159,7 @@ module CartoDB
       end
 
       def rename(result, current_name, new_name)
-        # TODO: refactor UserSchema to suuport Carto::User
+        # TODO: refactor UserSchema to support Carto::User
         taken_names = Carto::Db::UserSchema.new(::User[@user.id]).table_names
         new_name = Carto::ValidTableNameProposer.new.propose_valid_table_name(new_name, taken_names: taken_names)
 
