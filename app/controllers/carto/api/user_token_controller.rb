@@ -1,10 +1,12 @@
 # encoding: UTF-8
 
 require_relative '../../../models/carto/permission'
+require_dependency 'carto/uuidhelper'
 
 module Carto
   module Api
     class UserTokenController < ::Api::ApplicationController
+      include Carto::UUIDHelper
       ssl_required :show, :create
 
       before_filter :load_user_table, only: [:show, :create]
@@ -13,7 +15,7 @@ module Carto
 
 
       def create
-        token = SecureRandom.urlsafe_base64(nil, false)
+        token = random_uuid
         @user_table.visualization.permission.set_usertoken_permission(token,permission_param)
         @user_table.visualization.permission.save
         render_jsonp(user_token: token)
