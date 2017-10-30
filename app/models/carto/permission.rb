@@ -11,6 +11,7 @@ class Carto::Permission < ActiveRecord::Base
   TYPE_USER         = 'user'.freeze
   TYPE_ORGANIZATION = 'org'.freeze
   TYPE_GROUP        = 'group'.freeze
+  TYPE_USERTOKEN    = 'user_token'.freeze
 
   belongs_to :owner, class_name: Carto::User, select: Carto::User::DEFAULT_SELECT
   has_one :visualization, inverse_of: :permission, class_name: Carto::Visualization, foreign_key: :permission_id
@@ -183,6 +184,10 @@ class Carto::Permission < ActiveRecord::Base
     if granted_access != ACCESS_NONE
       self.acl = inputable_acl.select { |entry| entry[:entity][:id] != user.id }
     end
+  end
+
+  def set_usertoken_permission(subject, access)
+    set_subject_permission(subject, access, TYPE_USERTOKEN)
   end
 
   private
