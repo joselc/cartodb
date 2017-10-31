@@ -63,6 +63,8 @@ module Carto
       def entity_decoration(entry)
         if entry[:type] == Carto::Permission::TYPE_USER
           user_decoration(entry[:id])
+        elsif entry[:type] ==Carto::Permission::TYPE_USERTOKEN
+          usertoken_decoration(entry[:id])
         elsif entry[:type] == Carto::Permission::TYPE_ORGANIZATION
           organization_decoration(entry[:id])
         elsif entry[:type] == Carto::Permission::TYPE_GROUP
@@ -70,6 +72,10 @@ module Carto
         else
           raise "Unknown entity type: #{entry[:type]}"
         end
+      end
+
+      def usertoken_decoration(user_token)
+        return {}
       end
 
       def user_decoration(user_id)

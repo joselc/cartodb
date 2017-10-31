@@ -1,6 +1,7 @@
 # encoding: UTF-8
 
 require_relative '../../../models/carto/permission'
+require 'ostruct'
 
 module Carto
   module Api
@@ -8,7 +9,7 @@ module Carto
       ssl_required :show, :create, :update, :destroy
 
       REJECT_PARAMS = %w{ format controller action row_id requestId column_id
-                          api_key table_id oauth_token oauth_token_secret api_key user_domain }.freeze
+                          api_key table_id oauth_token oauth_token_secret api_key user_domain user_token }.freeze
 
       before_filter :set_start_time
       before_filter :load_user_table, only: [:show, :create, :update, :destroy]
@@ -70,6 +71,15 @@ module Carto
 
       protected
 
+      def user_token
+        rx = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+        if params[:user_token].present? && rx.match(params[:user_token])
+          OpenStruct.new(:id => params[:user_token])
+        else
+          nil
+        end
+      end
+
       def filtered_row
         params.reject { |k, _| REJECT_PARAMS.include?(k) }.symbolize_keys
       end
@@ -80,11 +90,11 @@ module Carto
       end
 
       def read_privileges?
-        head(401) unless current_user && @user_table.visualization.is_viewable_by_user?(current_user)
+        head(401) unless (user_token && @user_table.visualization.is_viewable_by_user?(user_token)) || (current_user && @user_table.visualization.is_viewable_by_user?(current_user))
       end
 
       def write_privileges?
-        head(401) unless current_user && @user_table.visualization.writable_by?(current_user)
+        head(401) unless (user_token && @user_table.visualization.writable_by?(user_token)) || (current_user && @user_table.visualization.writable_by?(current_user))
       end
     end
   end

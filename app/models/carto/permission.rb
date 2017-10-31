@@ -26,6 +26,7 @@ class Carto::Permission < ActiveRecord::Base
   end
 
   def user_has_read_permission?(user)
+    CartoDB::Logger.info(message: user.id)
     owner?(user) || permitted?(user, ACCESS_READONLY)
   end
 
@@ -227,11 +228,16 @@ class Carto::Permission < ActiveRecord::Base
   def acl_entries_for_user(user)
     acl.select do |entry|
       (
+        acl_entry_is_for_user_token?(entry, user.id) ||
         acl_entry_is_for_user_id?(entry, user.id) ||
         acl_entry_is_for_organization_id(entry, user.organization_id) ||
         (!user.groups.nil? && acl_entry_is_for_a_user_group(entry, user.groups.map(&:id)))
       )
     end
+  end
+
+  def acl_entry_is_for_user_token?(entry, user_token)
+    entry[:type] == TYPE_USERTOKEN && entry[:id] == user_token
   end
 
   def acl_entry_is_for_user_id?(entry, user_id)
