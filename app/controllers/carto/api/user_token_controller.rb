@@ -18,7 +18,7 @@ module Carto
         token = random_uuid
         @user_table.visualization.permission.set_usertoken_permission(token,permission_param)
         @user_table.visualization.permission.save
-        render_jsonp(user_token: token)
+        render_jsonp({user_token: token, perm: permission_param})
       end
 
       def permission_param
@@ -40,7 +40,7 @@ module Carto
       end
 
       def write_privileges?
-        ead(401) unless current_user && @user_table.visualization.writable_by?(current_user)
+        head(401) unless current_user && @user_table.visualization.writable_by?(current_user)
       end
     end
   end

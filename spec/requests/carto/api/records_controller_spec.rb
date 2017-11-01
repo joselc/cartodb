@@ -1,12 +1,15 @@
 # encoding: utf-8
 
 require_relative '../../../spec_helper'
+require_dependency 'carto/uuidhelper'
 
 describe Carto::Api::RecordsController do
   describe '#show legacy tests' do
+    include Carto::UUIDHelper
 
     before(:all) do
       @user = FactoryGirl.create(:valid_user)
+      @user2 = FactoryGirl.create(:valid_user)
     end
 
     before(:each) do
@@ -18,6 +21,7 @@ describe Carto::Api::RecordsController do
     after(:all) do
       bypass_named_maps
       @user.destroy
+      @user2.destroy
     end
 
     let(:params) { { api_key: @user.api_key, table_id: @table.name, user_domain: @user.username } }
@@ -255,6 +259,76 @@ describe Carto::Api::RecordsController do
         (/\"type\":\"point\"/i =~ response.body[:the_geom]).nil?.should eq false
         # INFO: Postgis sometimes rounds up so cannot directly compare values
         # response.body[:the_geom].should == payload[:the_geom]
+      end
+    end
+
+    it "Get row with user token" do
+      pk = @table.insert_row!(
+          name: String.random(10),
+          description: String.random(50),
+          the_geom: %{\{"type":"Point","coordinates":[0.966797,55.91843]\}}
+      )
+      ut = Carto::UserTable.find(@table.id)
+      token = random_uuid
+      ut.visualization.permission.set_usertoken_permission(token,Permission::ACCESS_READONLY)
+      payload = {
+          api_key: @user2.api_key,
+          id: pk,
+          user_token: token,
+          table_id: @user.username + "." + @table.name,
+          user_domain: @user2.username
+      }
+      get_json api_v1_tables_records_show_url(params.merge(payload)) do |response|
+        response.status.should be_success
+      end
+    end
+
+    it "Create row with user token" do
+      #tlut = Carto::Helpers::TableLocator.new.get_by_id_or_name(@user.username + "." + @table.name,@user2.username)
+
+      ut = Carto::UserTable.find(@table.id)
+      token = random_uuid
+      ut.visualization.permission.set_usertoken_permission(token,Permission::ACCESS_READWRITE)
+      payload = {
+          api_key: @user2.api_key,
+          table_id: @user.username + "." + @table.name,
+          user_domain: @user2.username,
+          user_token: token,
+          name: "row_name",
+          description: "row_description"
+      }
+      puts payload
+      post_json api_v1_tables_records_create_url(params.merge(payload)) do |response|
+        puts response.status
+        puts response.body
+        response.status.should be_success
+        #response.body[:description].should == payload[:description]
+      end
+    end
+
+    it "Update row with user token" do
+      pk = @table.insert_row!(
+          name: "row_name",
+          description: "row_desc"
+      )
+      ut = Carto::UserTable.find(@table.id)
+      token = random_uuid
+      ut.visualization.permission.set_usertoken_permission(token,Permission::ACCESS_READWRITE)
+      payload = {
+          api_key: @user2.api_key,
+          table_id: @user.username + "." + @table.name,
+          user_domain: @user2.username,
+          cartodb_id: pk,
+          user_token: token,
+          name: "row_name",
+          description: "row_description"
+      }
+      puts payload
+      put_json api_v1_tables_record_update_url(params.merge(payload)) do |response|
+        puts response.status
+        puts response.body
+        response.status.should be_success
+        response.body[:description].should == payload[:description]
       end
     end
   end
