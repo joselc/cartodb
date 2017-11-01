@@ -1,6 +1,5 @@
 # encoding: UTF-8
 
-require_relative '../../../models/carto/permission'
 require_dependency 'carto/uuidhelper'
 
 module Carto
@@ -15,10 +14,12 @@ module Carto
 
 
       def create
-        token = random_uuid
-        @user_table.visualization.permission.set_usertoken_permission(token,permission_param)
-        @user_table.visualization.permission.save
-        render_jsonp({user_token: token, perm: permission_param})
+        carto_user = Carto::User.find(current_user.id)
+        token = Carto::UserToken.new(user: carto_user, user_table: @user_table, permissions: permission_param)
+        token.save
+        #@user_table.visualization.permission.set_usertoken_permission(token,permission_param)
+        #@user_table.visualization.permission.save
+        render_jsonp(token)
       end
 
       def permission_param
@@ -26,7 +27,7 @@ module Carto
         if params[:perm].present? && rx.match(params[:perm])
           params[:perm]
         else
-          Permission::ACCESS_READONLY
+          Carto::UserToken::ACCESS_READONLY
         end
       end
 

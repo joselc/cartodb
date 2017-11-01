@@ -22,8 +22,10 @@ describe Carto::Api::UserTokenController do
   it "Should create a user token for user table" do
     post_json api_v1_tables_usertokens_create_url(params) do |response|
       response.status.should be_success
-      response.body[:user_token].should match(@user_token_rx)
-      response.body[:perm].should match(Permission::ACCESS_READONLY)
+      response.body[:user_token][:id].should match(@user_token_rx)
+      response.body[:user_token][:permissions].should match(Carto::UserToken::ACCESS_READONLY)
+      response.body[:user_token][:user_table_id].should == @table.id
+      response.body[:user_token][:user_id].should == @user.id
     end
   end
 
@@ -34,18 +36,22 @@ describe Carto::Api::UserTokenController do
   end
 
   it "Should create a readonly user token for user table" do
-    post_json api_v1_tables_usertokens_create_url(params.merge(perm: Permission::ACCESS_READONLY)) do |response|
+    post_json api_v1_tables_usertokens_create_url(params.merge(perm: Carto::UserToken::ACCESS_READONLY)) do |response|
       response.status.should be_success
-      response.body[:user_token].should match(@user_token_rx)
-      response.body[:perm].should match(Permission::ACCESS_READONLY)
+      response.body[:user_token][:id].should match(@user_token_rx)
+      response.body[:user_token][:permissions].should match(Carto::UserToken::ACCESS_READONLY)
+      response.body[:user_token][:user_table_id].should == @table.id
+      response.body[:user_token][:user_id].should == @user.id
     end
   end
 
   it "Should create a readwrite user token for user table" do
     post_json api_v1_tables_usertokens_create_url(params.merge(perm: Permission::ACCESS_READWRITE)) do |response|
       response.status.should be_success
-      response.body[:user_token].should match(@user_token_rx)
-      response.body[:perm].should match(Permission::ACCESS_READWRITE)
+      response.body[:user_token][:id].should match(@user_token_rx)
+      response.body[:user_token][:permissions].should match(Carto::UserToken::ACCESS_READWRITE)
+      response.body[:user_token][:user_table_id].should == @table.id
+      response.body[:user_token][:user_id].should == @user.id
     end
   end
 end

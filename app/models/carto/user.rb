@@ -65,6 +65,8 @@ class Carto::User < ActiveRecord::Base
 
   has_many :received_notifications, inverse_of: :user
 
+  has_many :user_tokens, class_name: Carto::UserToken, inverse_of: :user
+
   delegate [
       :database_username, :database_password, :in_database,
       :db_size_in_bytes, :get_api_calls, :table_count, :public_visualization_count, :all_visualization_count,
