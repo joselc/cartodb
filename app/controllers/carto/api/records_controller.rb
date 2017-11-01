@@ -74,10 +74,10 @@ module Carto
       def user_token
         rx = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
         if params[:user_token].present? && rx.match(params[:user_token])
-          OpenStruct.new(:id => params[:user_token])
-        else
-          nil
+          Carto::UserToken.find(params[:user_token])
         end
+      rescue => e
+        nil
       end
 
       def filtered_row
@@ -90,11 +90,11 @@ module Carto
       end
 
       def read_privileges?
-        head(401) unless (user_token && @user_table.visualization.is_viewable_by_user?(user_token)) || (current_user && @user_table.visualization.is_viewable_by_user?(current_user))
+        head(401) unless (user_token && @user_table.is_viewable_by_usertoken?(user_token)) || (current_user && @user_table.visualization.is_viewable_by_user?(current_user))
       end
 
       def write_privileges?
-        head(401) unless (user_token && @user_table.visualization.writable_by?(user_token)) || (current_user && @user_table.visualization.writable_by?(current_user))
+        head(401) unless (user_token && @user_table.is_writable_by_usertoken?(user_token)) || (current_user && @user_table.visualization.writable_by?(current_user))
       end
     end
   end

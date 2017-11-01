@@ -211,6 +211,14 @@ module Carto
       user_id == user.id
     end
 
+    def is_viewable_by_usertoken?(user_token)
+      user_token && user_tokens.exists?(user_token.id) && user_token.read_access?
+    end
+
+    def is_writable_by_usertoken?(user_token)
+      user_token && user_tokens.exists?(user_token.id) && user_token.readwrite_access?
+    end
+
     private
 
     def default_privacy_value

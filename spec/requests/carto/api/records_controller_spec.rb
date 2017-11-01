@@ -269,12 +269,15 @@ describe Carto::Api::RecordsController do
           the_geom: %{\{"type":"Point","coordinates":[0.966797,55.91843]\}}
       )
       ut = Carto::UserTable.find(@table.id)
-      token = random_uuid
-      ut.visualization.permission.set_usertoken_permission(token,Permission::ACCESS_READONLY)
+      ut.visualization.privacy=Carto::Visualization::PRIVACY_PRIVATE
+      ut.visualization.save
+      carto_user = Carto::User.find(@user.id)
+      token = Carto::UserToken.new(user: carto_user, user_table: ut, permissions: Carto::UserToken::ACCESS_READONLY)
+      token.save
       payload = {
           api_key: @user2.api_key,
           id: pk,
-          user_token: token,
+          user_token: token.id,
           table_id: @user.username + "." + @table.name,
           user_domain: @user2.username
       }
@@ -284,51 +287,120 @@ describe Carto::Api::RecordsController do
     end
 
     it "Create row with user token" do
-      #tlut = Carto::Helpers::TableLocator.new.get_by_id_or_name(@user.username + "." + @table.name,@user2.username)
-
       ut = Carto::UserTable.find(@table.id)
-      token = random_uuid
-      ut.visualization.permission.set_usertoken_permission(token,Permission::ACCESS_READWRITE)
+      ut.visualization.privacy=Carto::Visualization::PRIVACY_PRIVATE
+      ut.visualization.save
+      carto_user = Carto::User.find(@user.id)
+      token = Carto::UserToken.new(user: carto_user, user_table: ut, permissions: Carto::UserToken::ACCESS_READWRITE)
+      token.save
       payload = {
           api_key: @user2.api_key,
           table_id: @user.username + "." + @table.name,
           user_domain: @user2.username,
-          user_token: token,
+          user_token: token.id,
           name: "row_name",
           description: "row_description"
       }
-      puts payload
       post_json api_v1_tables_records_create_url(params.merge(payload)) do |response|
-        puts response.status
-        puts response.body
         response.status.should be_success
-        #response.body[:description].should == payload[:description]
+        response.body[:description].should == payload[:description]
+        response.body[:name].should == payload[:name]
       end
     end
 
     it "Update row with user token" do
       pk = @table.insert_row!(
-          name: "row_name",
+          name: "row_n",
           description: "row_desc"
       )
       ut = Carto::UserTable.find(@table.id)
-      token = random_uuid
-      ut.visualization.permission.set_usertoken_permission(token,Permission::ACCESS_READWRITE)
+      ut.visualization.privacy=Carto::Visualization::PRIVACY_PRIVATE
+      ut.visualization.save
+      carto_user = Carto::User.find(@user.id)
+      token = Carto::UserToken.new(user: carto_user, user_table: ut, permissions: Carto::UserToken::ACCESS_READWRITE)
+      token.save
       payload = {
           api_key: @user2.api_key,
           table_id: @user.username + "." + @table.name,
           user_domain: @user2.username,
+          user_token: token.id,
           cartodb_id: pk,
-          user_token: token,
           name: "row_name",
           description: "row_description"
       }
-      puts payload
       put_json api_v1_tables_record_update_url(params.merge(payload)) do |response|
-        puts response.status
-        puts response.body
+        response.status.should be_success
+        response.body[:name].should == payload[:name]
+        response.body[:description].should == payload[:description]
+      end
+    end
+
+    it "Delete row with user token" do
+      pk = @table.insert_row!(
+          name: "row_name",
+          description: "row_desc"
+      )
+      ut = Carto::UserTable.find(@table.id)
+      ut.visualization.privacy=Carto::Visualization::PRIVACY_PRIVATE
+      ut.visualization.save
+      carto_user = Carto::User.find(@user.id)
+      token = Carto::UserToken.new(user: carto_user, user_table: ut, permissions: Carto::UserToken::ACCESS_READWRITE)
+      token.save
+      payload = {
+          api_key: @user2.api_key,
+          table_id: @user.username + "." + @table.name,
+          user_domain: @user2.username,
+          user_token: token.id,
+          cartodb_id: pk
+      }
+      row_count = @table.rows_counted
+      delete_json api_v1_tables_record_destroy_url(params.merge(payload)) do |response|
+        response.status.should == 204
+        @table.rows_counted.should == (row_count - 1)
+      end
+    end
+
+    it "Shouldn't get row with user token" do
+      pk = @table.insert_row!(
+          name: String.random(10),
+          description: String.random(50),
+          the_geom: %{\{"type":"Point","coordinates":[0.966797,55.91843]\}}
+      )
+      ut = Carto::UserTable.find(@table.id)
+      ut.visualization.privacy=Carto::Visualization::PRIVACY_PRIVATE
+      ut.visualization.save
+      token = random_uuid
+      payload = {
+          api_key: @user2.api_key,
+          id: pk,
+          user_token: token,
+          table_id: @user.username + "." + @table.name,
+          user_domain: @user2.username
+      }
+      get_json api_v1_tables_records_show_url(params.merge(payload)) do |response|
+        response.status.should_not be_success
+      end
+    end
+
+    it "Shouldn't create row with user token" do
+      ut = Carto::UserTable.find(@table.id)
+      ut.visualization.privacy=Carto::Visualization::PRIVACY_PRIVATE
+      ut.visualization.save
+      carto_user = Carto::User.find(@user.id)
+      token = Carto::UserToken.new(user: carto_user, user_table: ut, permissions: Carto::UserToken::ACCESS_READWRITE)
+      token.save
+      payload = {
+          api_key: @user2.api_key,
+          table_id: @user.username + "." + @table.name,
+          user_domain: @user2.username,
+          user_token: token.id,
+          name: "row_name",
+          description: "row_description"
+      }
+      post_json api_v1_tables_records_create_url(params.merge(payload)) do |response|
         response.status.should be_success
         response.body[:description].should == payload[:description]
+        response.body[:name].should == payload[:name]
       end
     end
   end
