@@ -66,7 +66,20 @@ module Carto
 
         head :no_content
       rescue
-        render_jsonp({ errors: ["row identified with #{params[:cartodb_id]} not found"] }, 404)
+        begin
+          if !user_token.nil?
+            owner = @user_table.user
+            owner.in_database
+                .select
+                .from(@user_table.service.name.to_sym.qualify(schema_name.to_sym))
+                .where(cartodb_id: id)
+                .delete
+          else
+            render_jsonp({ errors: ["row identified with #{params[:cartodb_id]} not found"] }, 404)
+          end
+        rescue
+          render_jsonp({ errors: ["row identified with #{params[:cartodb_id]} not found"] }, 404)
+        end
       end
 
       protected
