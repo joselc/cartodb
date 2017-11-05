@@ -73,7 +73,7 @@ This looked like a really nice solution in theory (as Javier prevented me on an 
 
 I developed this solution and tested it with `curl`requests. It was working fine for read permissions, and even for readwrite (and it shouldn't, so maybe I got wrong at some place with curl). I still think this way is a better way to implement it, but requires of a large refactor to implement an abstract authorization entity, to use instead of user. But this is completely out of the scope of the test. **So finally, I went back to my first approach.**
 
-#### Known issues
+#### Known issues - SOLVED
 Everything is working fine except for the DELETE operation on records (with user token). GET, POST and PUT use `UserTable` to deal with the table, wich is fine and helpful for the issue. But in the DELETE action, it is different, as it uses the `current_user` (wich is usually different from the owner when using a token), and that is causing a `404`error, as it can't find the table. I tried to deal with that, but I wasn't able to identify clearly the logic.  
 Update: I added exception control in `DELETE` operation, trying to access the database from `@user_table.user` but it is still failing. The rescue block now looks like this:
 ```
@@ -94,7 +94,8 @@ rescue
   end
 end
 ```
-I'm sure the problem is caused because `@user_table.user` is an instance of `Carto::User`, and it should be an instance of `User` (Sequel model), but I wasn't able to determine how to retrieve the `@user_table.user` as a `User` instance.
+I'm sure the problem is caused because `@user_table.user` is an instance of `Carto::User`, and it should be an instance of `User` (Sequel model), but I wasn't able to determine how to retrieve the `@user_table.user` as a `User` instance.  
+Update 2: as Javier pointed in the code review, just doing: `owner = ::User.find(id: @user_table.user.id)` retrieves the `User` (Sequel Model), and the query works fine.
 
 ### Main challenges I faced
 + As I don't have previous experience with rails and ruby, it was difficult to follow the syntax and the logic of the application. I ended up understanding it, but I almost had to troubleshoot everything I wanted to code. Coming from a Java environment it's hard to get used to follow this kind of languages. But not impossible! :)
