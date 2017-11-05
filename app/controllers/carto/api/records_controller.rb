@@ -68,12 +68,14 @@ module Carto
       rescue
         begin
           if !user_token.nil?
-            owner = @user_table.user
+            owner = ::User.find(id: @user_table.user.id)
             owner.in_database
                 .select
                 .from(@user_table.service.name.to_sym.qualify(schema_name.to_sym))
                 .where(cartodb_id: id)
                 .delete
+
+            head :no_content
           else
             render_jsonp({ errors: ["row identified with #{params[:cartodb_id]} not found"] }, 404)
           end
